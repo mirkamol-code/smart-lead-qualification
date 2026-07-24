@@ -1,4 +1,4 @@
-# 📩 Comment to Ticket Triage (Hugging Face AI)
+# 📩 Smart Lead Qualification (Hugging Face AI)
 
 A Spring Boot REST API that accepts inbound messages/comments, analyzes them using Hugging Face AI, and automatically creates support/lead tickets when the message qualifies.
 
