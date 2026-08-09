@@ -3,6 +3,12 @@ server:
   servlet:
     context-path: /api/v1
 spring:
+  ai:
+    openai:
+      api-key: ${HUGGINGFACE_API_TOKEN:}
+      chat:
+        model: meta-llama/Llama-3.3-70B-Instruct:groq
+      base-url: https://router.huggingface.co/v1
   application:
     name: comment-to-ticket-triage
   datasource:
@@ -20,6 +26,3 @@ spring:
   web:
     error:
       include-message: always
-ai:
-  huggingface:
-    token: ${HUGGINGFACE_API_TOKEN:}
