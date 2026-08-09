@@ -5,7 +5,7 @@ server:
 spring:
   ai:
     openai:
-      api-key: ${HUGGINGFACE_API_TOKEN:}
+      api-key: ${HUGGINGFACE_API_TOKEN}
       chat:
         model: meta-llama/Llama-3.3-70B-Instruct:groq
       base-url: https://router.huggingface.co/v1
