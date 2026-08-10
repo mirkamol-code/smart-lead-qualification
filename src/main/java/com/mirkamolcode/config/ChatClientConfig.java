@@ -22,7 +22,7 @@ public class ChatClientConfig {
             systemPrompt = systemLeadPrompt.getContentAsString(StandardCharsets.UTF_8);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("Failed to load system prompt from classpath:/prompt/system-lead-prompt.txt", e);
         }
 
         return builder
