@@ -1,4 +1,4 @@
-# 📩 Smart Lead Qualification (Hugging Face AI)
+# 📩 Smart Lead Qualification v1.0 (Hugging Face AI)
 
 A Spring Boot REST API that accepts inbound messages/comments, analyzes them using Hugging Face AI, and automatically creates support/lead tickets when the message qualifies.
 
