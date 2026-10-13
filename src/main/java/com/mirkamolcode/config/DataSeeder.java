@@ -1,0 +1,75 @@
+package com.mirkamolcode.config;
+
+import com.mirkamolcode.entity.ApplicationUser;
+import com.mirkamolcode.entity.Permission;
+import com.mirkamolcode.entity.Role;
+import com.mirkamolcode.repository.ApplicationUserRepository;
+import com.mirkamolcode.repository.PermissionRepository;
+import com.mirkamolcode.repository.RoleRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.Set;
+
+@Component
+@Profile({"dev", "local", "default"})
+public class DataSeeder implements CommandLineRunner {
+    private final ApplicationUserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PermissionRepository permissionRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public DataSeeder(ApplicationUserRepository userRepository, RoleRepository roleRepository, PermissionRepository permissionRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.permissionRepository = permissionRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Override
+    @Transactional
+    public void run(String... args) throws Exception {
+        Permission commentRead = getOrCreatePermission("comment:read");
+        Permission commentListRead = getOrCreatePermission("commentList:read");
+        Permission commentCreate = getOrCreatePermission("comment:create"); // No trailing space!
+        Permission ticketListRead = getOrCreatePermission("ticketList:read");
+        Permission ticketsRead = getOrCreatePermission("tickets:read");
+
+        Role userRole = getOrCreateRole("USER", Set.of(commentRead, commentCreate));
+        Role adminRole = getOrCreateRole("ADMIN", Set.of(commentRead, commentListRead, ticketListRead, ticketsRead));
+
+        createUserIfNotFound("user123", "password", Set.of(userRole));
+        createUserIfNotFound("admin123", "password", Set.of(adminRole));
+    }
+
+    private Permission getOrCreatePermission(String name) {
+        return permissionRepository.findByName(name)
+                .orElseGet(() -> permissionRepository.save(new Permission(name)));
+    }
+
+    private Role getOrCreateRole(String name, Set<Permission> permissions) {
+        return roleRepository.findByName(name)
+                .map(existingRole -> {
+                    existingRole.getPermissions().addAll(permissions);
+                    return roleRepository.save(existingRole);
+                })
+                .orElseGet(() -> roleRepository.save(new Role(name, new HashSet<>(permissions))));
+    }
+
+    private void createUserIfNotFound(String username, String rawPassword, Set<Role> roles) {
+        if (userRepository.findApplicationUserByUsername(username).isEmpty()) {
+            ApplicationUser user = new ApplicationUser(
+                    username,
+                    passwordEncoder.encode(rawPassword),
+                    new HashSet<>(roles)
+            );
+            userRepository.save(user);
+        }
+    }
+}
+

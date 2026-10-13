@@ -2,6 +2,10 @@ server:
   port: 8080
   servlet:
     context-path: /api/v1
+    session:
+      cookie:
+        max-age:
+      timeout: 30m
 spring:
   ai:
     openai:
