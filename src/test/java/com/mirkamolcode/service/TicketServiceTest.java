@@ -5,6 +5,7 @@ import com.mirkamolcode.entity.Comment;
 import com.mirkamolcode.entity.Ticket;
 import com.mirkamolcode.entity.enums.Category;
 import com.mirkamolcode.entity.enums.Priority;
+import com.mirkamolcode.exception.ResourceNotFoundException;
 import com.mirkamolcode.repository.TicketRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,10 +15,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,7 +30,7 @@ class TicketServiceTest {
     private TicketService underTest;
 
     @Test
-    void shouldGetAllTickets(){
+    void shouldGetAllTickets() {
         // given
         Comment commentAboutBilling = new Comment("atbc@gmail.com", "I paid my subscription twice a month");
         Comment commentAboutAccount = new Comment("bdc@gmail.com", "I have difficulty with login");
@@ -49,16 +50,16 @@ class TicketServiceTest {
     }
 
     @Test
-    void shouldGetTicketById(){
+    void shouldGetTicketById() {
         // given
+        UUID id = UUID.randomUUID();
         Comment commentAboutAccount = new Comment("bdc@gmail.com", "I have difficulty with login");
+        Ticket expected = new Ticket(id, "Logging issue", Category.ACCOUNT, Priority.HIGH, "Can't log in", commentAboutAccount, null);
 
-        Ticket expected = new Ticket("Logging issue", Category.ACCOUNT, Priority.HIGH, "Can't log in", commentAboutAccount);
-
-        given(ticketRepository.findById(expected.getId())).willReturn(Optional.of(expected));
+        given(ticketRepository.findById(id)).willReturn(Optional.of(expected));
 
         // when
-        TicketResponse actual = underTest.getById(any());
+        TicketResponse actual = underTest.getById(id);
 
         // then
         assertThat(actual.title()).isEqualTo(expected.getTitle());
@@ -66,14 +67,14 @@ class TicketServiceTest {
     }
 
     @Test
-    void shouldThrowWhenTicketNotFound(){
+    void shouldThrowWhenTicketNotFound() {
         // given
-        given(ticketRepository.findById(any())).willReturn(Optional.empty());
+        UUID id = UUID.randomUUID();
+        given(ticketRepository.findById(id)).willReturn(Optional.empty());
 
         // then
-        assertThatThrownBy(() -> underTest.getById(any()))
+        assertThatThrownBy(() -> underTest.getById(id))
                 .hasMessageContaining("Ticket not found")
-                .isInstanceOf(RuntimeException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
     }
-
 }
