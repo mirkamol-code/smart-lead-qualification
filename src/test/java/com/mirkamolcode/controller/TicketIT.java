@@ -1,6 +1,7 @@
 package com.mirkamolcode.controller;
 
 import com.mirkamolcode.AbstractTestConfig;
+import com.mirkamolcode.dto.ApiResponse;
 import com.mirkamolcode.dto.TicketResponse;
 import com.mirkamolcode.entity.ApplicationUser;
 import com.mirkamolcode.entity.Comment;
@@ -53,9 +54,11 @@ public class TicketIT extends AbstractTestConfig {
                 .exchange()
                 .expectStatus()
                 .isOk()
-                .expectBodyList(new ParameterizedTypeReference<TicketResponse>() {
+                .expectBody(new ParameterizedTypeReference<ApiResponse<List<TicketResponse>>>() {
                 })
-                .value(t -> {
+                .value(response -> {
+                    assertThat(response).isNotNull();
+                    List<TicketResponse> t = response.getBody();
                     assertThat(t).isNotEmpty();
                     assertThat(t.getFirst().title()).isEqualTo(ticket.getTitle());
                     assertThat(t.getFirst().category()).isEqualTo(ticket.getCategory());
@@ -83,16 +86,19 @@ public class TicketIT extends AbstractTestConfig {
                 )
         );
 
-        TicketResponse ticketResponse = webTestClient.get()
+        ApiResponse<TicketResponse> apiResponse = webTestClient.get()
                 .uri(TICKET_BASE_URL + "/{id}", savedTicket.getId())
                 .headers(h -> h.setBasicAuth("admin123", "password"))
                 .exchange()
                 .expectStatus()
                 .isOk()
-                .expectBody(TicketResponse.class)
+                .expectBody(new ParameterizedTypeReference<ApiResponse<TicketResponse>>() {
+                })
                 .returnResult()
                 .getResponseBody();
 
+        assertThat(apiResponse).isNotNull();
+        TicketResponse ticketResponse = apiResponse.getBody();
         assertThat(ticketResponse).isNotNull();
         assertThat(ticketResponse.id()).isEqualTo(savedTicket.getId());
         assertThat(ticketResponse.title()).isEqualTo(savedTicket.getTitle());

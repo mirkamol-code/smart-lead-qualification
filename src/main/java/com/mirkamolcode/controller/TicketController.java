@@ -1,5 +1,6 @@
 package com.mirkamolcode.controller;
 
+import com.mirkamolcode.dto.ApiResponse;
 import com.mirkamolcode.dto.TicketResponse;
 import com.mirkamolcode.service.TicketService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,13 +23,13 @@ public class TicketController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('ticketList:read')")
-    public List<TicketResponse> getAll(){
-        return ticketService.getAll();
+    public ApiResponse<List<TicketResponse>> getAll() {
+        return ApiResponse.success("Tickets retrieved successfully", ticketService.getAll());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('tickets:read')")
-    public TicketResponse getById(@PathVariable UUID id){
-        return ticketService.getById(id);
+    public ApiResponse<TicketResponse> getById(@PathVariable UUID id) {
+        return ApiResponse.success("Ticket retrieved successfully", ticketService.getById(id));
     }
 }

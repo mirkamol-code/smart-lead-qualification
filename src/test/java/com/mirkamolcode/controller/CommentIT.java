@@ -2,6 +2,7 @@ package com.mirkamolcode.controller;
 
 import com.mirkamolcode.AbstractTestConfig;
 import com.mirkamolcode.dto.AiTicketResponse;
+import com.mirkamolcode.dto.ApiResponse;
 import com.mirkamolcode.dto.CommentResponse;
 import com.mirkamolcode.dto.CreateCommentRequest;
 import com.mirkamolcode.service.HuggingFaceService;
@@ -57,8 +58,8 @@ public class CommentIT extends AbstractTestConfig {
                 .expectStatus()
                 .isOk()
                 .expectBody()
-                .jsonPath("$.content").isArray()
-                .jsonPath("$.content.length()").isNotEmpty();
+                .jsonPath("$.body.content").isArray()
+                .jsonPath("$.body.content.length()").isNotEmpty();
     }
 
     @Test
@@ -80,7 +81,7 @@ public class CommentIT extends AbstractTestConfig {
                 .expectStatus()
                 .isOk()
                 .expectBody()
-                .jsonPath("$.content").isArray();
+                .jsonPath("$.body.content").isArray();
     }
 
     private void createComment(CreateCommentRequest request) {
@@ -91,8 +92,11 @@ public class CommentIT extends AbstractTestConfig {
                 .exchange()
                 .expectStatus()
                 .isOk()
-                .expectBody(new ParameterizedTypeReference<CommentResponse>() {
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CommentResponse>>() {
                 })
-                .value(c -> assertThat(c).isNotNull());
+                .value(c -> {
+                    assertThat(c).isNotNull();
+                    assertThat(c.getBody()).isNotNull();
+                });
     }
 }
