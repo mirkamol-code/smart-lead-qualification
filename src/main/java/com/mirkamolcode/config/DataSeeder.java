@@ -7,7 +7,7 @@ import com.mirkamolcode.repository.ApplicationUserRepository;
 import com.mirkamolcode.repository.PermissionRepository;
 import com.mirkamolcode.repository.RoleRepository;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +17,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Component
-@Profile({"dev", "local", "default"})
+@ConditionalOnProperty(
+        name = "app.data-seeder.enabled",
+        havingValue = "true",
+        matchIfMissing = false)
 public class DataSeeder implements CommandLineRunner {
     private final ApplicationUserRepository userRepository;
     private final RoleRepository roleRepository;

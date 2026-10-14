@@ -19,6 +19,9 @@ public class ApplicationUser {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    private Integer numberOfFailedLoginAttempts = 0;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "app_user_role",
@@ -40,13 +43,23 @@ public class ApplicationUser {
     private boolean isCredentialsExpired = false;
 
     public ApplicationUser() {
+        this.numberOfFailedLoginAttempts = 0;
     }
 
     public ApplicationUser(String username, String password, Set<Role> appUserRoles) {
         this.username = username;
         this.password = password;
         this.appUserRoles = appUserRoles;
+        this.numberOfFailedLoginAttempts = 0;
     }
+
+    public ApplicationUser(String username, String password, Set<Role> appUserRoles, Integer numberOfFailedLoginAttempts) {
+        this.username = username;
+        this.password = password;
+        this.appUserRoles = appUserRoles;
+        this.numberOfFailedLoginAttempts = numberOfFailedLoginAttempts;
+    }
+
 
     public UUID getId() {
         return id;
@@ -78,6 +91,14 @@ public class ApplicationUser {
 
     public void setAppUserRoles(Set<Role> appUserRoles) {
         this.appUserRoles = appUserRoles;
+    }
+
+    public Integer getNumberOfFailedLoginAttempts() {
+        return numberOfFailedLoginAttempts;
+    }
+
+    public void setNumberOfFailedLoginAttempts(Integer numberOfFailedLoginAttempts) {
+        this.numberOfFailedLoginAttempts = numberOfFailedLoginAttempts;
     }
 
     public boolean isEnabled() {
@@ -116,11 +137,11 @@ public class ApplicationUser {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         ApplicationUser that = (ApplicationUser) o;
-        return isEnabled == that.isEnabled && isAccountLocked == that.isAccountLocked && isAccountExpired == that.isAccountExpired && isCredentialsExpired == that.isCredentialsExpired && Objects.equals(id, that.id) && Objects.equals(username, that.username) && Objects.equals(password, that.password) && Objects.equals(appUserRoles, that.appUserRoles);
+        return isEnabled == that.isEnabled && isAccountLocked == that.isAccountLocked && isAccountExpired == that.isAccountExpired && isCredentialsExpired == that.isCredentialsExpired && Objects.equals(id, that.id) && Objects.equals(username, that.username) && Objects.equals(password, that.password) && Objects.equals(numberOfFailedLoginAttempts, that.numberOfFailedLoginAttempts) && Objects.equals(appUserRoles, that.appUserRoles);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, password, appUserRoles, isEnabled, isAccountLocked, isAccountExpired, isCredentialsExpired);
+        return Objects.hash(id, username, password, numberOfFailedLoginAttempts, appUserRoles, isEnabled, isAccountLocked, isAccountExpired, isCredentialsExpired);
     }
 }
