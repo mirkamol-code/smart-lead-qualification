@@ -30,7 +30,7 @@ public class CommentController {
             @Valid @RequestBody CreateCommentRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         CommentResponse response = commentService.save(request, userDetails.getUsername());
-        return ApiResponse.success("Comment created successfully", response);
+        return ApiResponse.success("Comment created successfully", 201, response);
     }
 
     @GetMapping("/my")
