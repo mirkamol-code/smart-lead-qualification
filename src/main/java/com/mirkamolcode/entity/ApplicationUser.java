@@ -137,11 +137,11 @@ public class ApplicationUser {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         ApplicationUser that = (ApplicationUser) o;
-        return isEnabled == that.isEnabled && isAccountLocked == that.isAccountLocked && isAccountExpired == that.isAccountExpired && isCredentialsExpired == that.isCredentialsExpired && Objects.equals(id, that.id) && Objects.equals(username, that.username) && Objects.equals(password, that.password) && Objects.equals(numberOfFailedLoginAttempts, that.numberOfFailedLoginAttempts) && Objects.equals(appUserRoles, that.appUserRoles);
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, password, numberOfFailedLoginAttempts, appUserRoles, isEnabled, isAccountLocked, isAccountExpired, isCredentialsExpired);
+        return Objects.hashCode(id);
     }
 }
