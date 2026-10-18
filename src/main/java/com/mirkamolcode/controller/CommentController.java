@@ -34,7 +34,7 @@ public class CommentController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasAuthority('comment:read')")
+    @PreAuthorize("hasAuthority('own comment:read')")
     public ApiResponse<Page<CommentResponse>> getMyComments(
             @AuthenticationPrincipal UserDetails userDetails,
             Pageable pageable) {
@@ -49,12 +49,20 @@ public class CommentController {
         return ApiResponse.success("All comments retrieved successfully", comments);
     }
 
+    @GetMapping("all/{id}")
+    @PreAuthorize("hasAuthority('any comment:read')")
+    public ApiResponse<CommentResponse> getAnyCommentById(
+            @PathVariable UUID id) {
+        CommentResponse comment = commentService.getAnyCommentById(id);
+        return ApiResponse.success("Comment retrieved successfully", comment);
+    }
+
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('comment:read')")
-    public ApiResponse<CommentResponse> getById(
+    @PreAuthorize("hasAuthority('own comment:read')")
+    public ApiResponse<CommentResponse> getOwnCommentById(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails) {
-        CommentResponse comment = commentService.getById(id, userDetails);
+        CommentResponse comment = commentService.getOwnCommentById(id, userDetails);
         return ApiResponse.success("Comment retrieved successfully", comment);
     }
 }

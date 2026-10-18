@@ -88,19 +88,16 @@ public class CommentService {
     }
 
     @Transactional(readOnly = true)
-    public CommentResponse getById(UUID id, UserDetails userDetails) {
-        boolean isAdmin = userDetails.getAuthorities().stream()
-                .anyMatch(a ->
-                        a.getAuthority().equals("commentList:read") ||
-                                a.getAuthority().equals("ROLE_ADMIN"));
-        Comment comment;
-        if (isAdmin) {
-            comment = commentRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
-        } else {
-            comment = commentRepository.findByIdAndUserUsername(id, userDetails.getUsername())
-                    .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
-        }
+    public CommentResponse getAnyCommentById(UUID id) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
+        return mapToCommentResponse(comment);
+    }
+
+    @Transactional(readOnly = true)
+    public CommentResponse getOwnCommentById(UUID id, UserDetails userDetails) {
+        Comment comment = commentRepository.findByIdAndUserUsername(id, userDetails.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
         return mapToCommentResponse(comment);
     }
 

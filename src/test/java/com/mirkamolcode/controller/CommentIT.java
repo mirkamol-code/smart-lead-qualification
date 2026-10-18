@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -84,8 +86,78 @@ public class CommentIT extends AbstractTestConfig {
                 .jsonPath("$.body.content").isArray();
     }
 
-    private void createComment(CreateCommentRequest request) {
-        webTestClient.post()
+    @Test
+    void canGetOwnCommentById() {
+        given(huggingFaceService.analyzeMessage(anyString()))
+                .willReturn(new AiTicketResponse(false, null, null, null, null));
+
+        CommentResponse created = createComment(
+                new CreateCommentRequest(
+                        "user123@gmail.com",
+                        "My specific comment for getById"
+                )
+        );
+
+        webTestClient.get()
+                .uri(PRODUCT_BASE_URL + "/{id}", created.id())
+                .headers(h -> h.setBasicAuth("user123", "password"))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.body.id").isEqualTo(created.id().toString())
+                .jsonPath("$.body.content").isEqualTo(created.content());
+    }
+
+    @Test
+    void canGetAnyCommentByIdAsAdmin() {
+        given(huggingFaceService.analyzeMessage(anyString()))
+                .willReturn(new AiTicketResponse(false, null, null, null, null));
+
+        CommentResponse created = createComment(
+                new CreateCommentRequest(
+                        "user123@gmail.com",
+                        "Comment to be fetched by admin"
+                )
+        );
+
+        webTestClient.get()
+                .uri(PRODUCT_BASE_URL + "/all/{id}", created.id())
+                .headers(h -> h.setBasicAuth("admin123", "password"))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.body.id").isEqualTo(created.id().toString())
+                .jsonPath("$.body.content").isEqualTo(created.content());
+    }
+
+    @Test
+    void regularUserCannotAccessAllEndpoint() {
+        webTestClient.get()
+                .uri(PRODUCT_BASE_URL + "/all/{id}", UUID.randomUUID())
+                .headers(h -> h.setBasicAuth("user123", "password"))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isForbidden();
+    }
+
+    @Test
+    void shouldReturn404WhenCommentNotFound() {
+        webTestClient.get()
+                .uri(PRODUCT_BASE_URL + "/{id}", UUID.randomUUID())
+                .headers(h -> h.setBasicAuth("user123", "password"))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isNotFound();
+    }
+
+    private CommentResponse createComment(CreateCommentRequest request) {
+        ApiResponse<CommentResponse> response = webTestClient.post()
                 .uri(PRODUCT_BASE_URL)
                 .headers(h -> h.setBasicAuth("user123", "password"))
                 .bodyValue(request)
@@ -94,9 +166,11 @@ public class CommentIT extends AbstractTestConfig {
                 .isOk()
                 .expectBody(new ParameterizedTypeReference<ApiResponse<CommentResponse>>() {
                 })
-                .value(c -> {
-                    assertThat(c).isNotNull();
-                    assertThat(c.getBody()).isNotNull();
-                });
+                .returnResult()
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.getBody()).isNotNull();
+        return response.getBody();
     }
 }

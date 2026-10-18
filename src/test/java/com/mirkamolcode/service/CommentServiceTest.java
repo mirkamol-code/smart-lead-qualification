@@ -167,12 +167,12 @@ class CommentServiceTest {
         // given
         UUID commentId = UUID.randomUUID();
         Comment comment = new Comment("atbc@gmail.com", "my comment");
-        UserDetails userDetails = new User("user123", "password", List.of(new SimpleGrantedAuthority("comment:read")));
+        UserDetails userDetails = new User("user123", "password", List.of(new SimpleGrantedAuthority("own comment:read")));
 
         given(commentRepository.findByIdAndUserUsername(commentId, "user123")).willReturn(Optional.of(comment));
 
         // when
-        CommentResponse actual = underTest.getById(commentId, userDetails);
+        CommentResponse actual = underTest.getOwnCommentById(commentId, userDetails);
 
         // then
         assertThat(actual).isNotNull();
@@ -184,12 +184,11 @@ class CommentServiceTest {
         // given
         UUID commentId = UUID.randomUUID();
         Comment comment = new Comment("someone@gmail.com", "user comment");
-        UserDetails adminDetails = new User("admin123", "password", List.of(new SimpleGrantedAuthority("commentList:read")));
 
         given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
 
         // when
-        CommentResponse actual = underTest.getById(commentId, adminDetails);
+        CommentResponse actual = underTest.getAnyCommentById(commentId);
 
         // then
         assertThat(actual).isNotNull();
@@ -200,12 +199,24 @@ class CommentServiceTest {
     void shouldThrowWhenCommentNotFoundForUser() {
         // given
         UUID commentId = UUID.randomUUID();
-        UserDetails userDetails = new User("user123", "password", List.of(new SimpleGrantedAuthority("comment:read")));
+        UserDetails userDetails = new User("user123", "password", List.of(new SimpleGrantedAuthority("own comment:read")));
 
         given(commentRepository.findByIdAndUserUsername(commentId, "user123")).willReturn(Optional.empty());
 
         // then
-        assertThatThrownBy(() -> underTest.getById(commentId, userDetails))
+        assertThatThrownBy(() -> underTest.getOwnCommentById(commentId, userDetails))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Comment not found");
+    }
+
+    @Test
+    void shouldThrowWhenCommentNotFoundForAny() {
+        // given
+        UUID commentId = UUID.randomUUID();
+        given(commentRepository.findById(commentId)).willReturn(Optional.empty());
+
+        // then
+        assertThatThrownBy(() -> underTest.getAnyCommentById(commentId))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Comment not found");
     }

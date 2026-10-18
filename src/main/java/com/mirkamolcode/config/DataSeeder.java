@@ -37,14 +37,15 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        Permission commentRead = getOrCreatePermission("comment:read");
+        Permission anyCommentRead = getOrCreatePermission("any comment:read");
+        Permission ownCommentRead = getOrCreatePermission("own comment:read");
         Permission commentListRead = getOrCreatePermission("commentList:read");
         Permission commentCreate = getOrCreatePermission("comment:create"); // No trailing space!
         Permission ticketListRead = getOrCreatePermission("ticketList:read");
         Permission ticketsRead = getOrCreatePermission("tickets:read");
 
-        Role userRole = getOrCreateRole("USER", Set.of(commentRead, commentCreate));
-        Role adminRole = getOrCreateRole("ADMIN", Set.of(commentRead, commentListRead, ticketListRead, ticketsRead));
+        Role userRole = getOrCreateRole("USER", Set.of(ownCommentRead, commentCreate));
+        Role adminRole = getOrCreateRole("ADMIN", Set.of(ownCommentRead, commentCreate, anyCommentRead, commentListRead, ticketListRead, ticketsRead));
 
         createUserIfNotFound("user123", "password", Set.of(userRole));
         createUserIfNotFound("admin123", "password", Set.of(adminRole));
