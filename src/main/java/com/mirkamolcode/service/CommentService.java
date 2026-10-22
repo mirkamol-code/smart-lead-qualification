@@ -1,38 +1,34 @@
 package com.mirkamolcode.service;
 
-import com.mirkamolcode.dto.AiTicketResponse;
 import com.mirkamolcode.dto.CommentResponse;
 import com.mirkamolcode.dto.CreateCommentRequest;
 import com.mirkamolcode.entity.ApplicationUser;
 import com.mirkamolcode.entity.Comment;
-import com.mirkamolcode.entity.Ticket;
-import com.mirkamolcode.entity.enums.Category;
+import com.mirkamolcode.event.CommentCreatedEvent;
 import com.mirkamolcode.exception.ResourceNotFoundException;
 import com.mirkamolcode.repository.ApplicationUserRepository;
 import com.mirkamolcode.repository.CommentRepository;
-import com.mirkamolcode.repository.TicketRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
 public class CommentService {
     private final CommentRepository commentRepository;
-    private final TicketRepository ticketRepository;
     private final ApplicationUserRepository userRepository;
-    private final HuggingFaceService huggingFaceService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public CommentService(CommentRepository commentRepository, TicketRepository ticketRepository, ApplicationUserRepository userRepository, HuggingFaceService huggingFaceService) {
+    public CommentService(CommentRepository commentRepository,
+                          ApplicationUserRepository userRepository,
+                          ApplicationEventPublisher eventPublisher) {
         this.commentRepository = commentRepository;
-        this.ticketRepository = ticketRepository;
         this.userRepository = userRepository;
-        this.huggingFaceService = huggingFaceService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -51,34 +47,11 @@ public class CommentService {
         Comment savedComment =
                 commentRepository.save(comment);
 
-        processAiTriage(savedComment);
+        eventPublisher.publishEvent(
+                new CommentCreatedEvent(savedComment.getId(), savedComment.getContent())
+        );
 
         return mapToCommentResponse(savedComment);
-    }
-
-    private void processAiTriage(Comment savedComment) {
-        AiTicketResponse aiResponse =
-                huggingFaceService.analyzeMessage(
-                        savedComment.getContent()
-                );
-
-        if (aiResponse.qualified()) {
-
-            Ticket ticket = new Ticket();
-
-            ticket.setTitle(aiResponse.title());
-
-            ticket.setCategory(aiResponse.category());
-
-            ticket.setPriority(aiResponse.priority());
-
-            ticket.setSummary(aiResponse.summary());
-
-            ticket.setComment(savedComment);
-
-
-            ticketRepository.save(ticket);
-        }
     }
 
     @Transactional(readOnly = true)

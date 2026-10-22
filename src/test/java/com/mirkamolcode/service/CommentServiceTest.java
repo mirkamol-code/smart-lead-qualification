@@ -1,23 +1,20 @@
 package com.mirkamolcode.service;
 
-import com.mirkamolcode.dto.AiTicketResponse;
 import com.mirkamolcode.dto.CommentResponse;
 import com.mirkamolcode.dto.CreateCommentRequest;
 import com.mirkamolcode.entity.ApplicationUser;
 import com.mirkamolcode.entity.Comment;
-import com.mirkamolcode.entity.Ticket;
-import com.mirkamolcode.entity.enums.Category;
-import com.mirkamolcode.entity.enums.Priority;
+import com.mirkamolcode.event.CommentCreatedEvent;
 import com.mirkamolcode.exception.ResourceNotFoundException;
 import com.mirkamolcode.repository.ApplicationUserRepository;
 import com.mirkamolcode.repository.CommentRepository;
-import com.mirkamolcode.repository.TicketRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -35,23 +32,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
 
     @Mock
-    private TicketRepository ticketRepository;
-
-    @Mock
-    private HuggingFaceService huggingFaceService;
-
-    @Mock
     private CommentRepository commentRepository;
 
     @Mock
     private ApplicationUserRepository userRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private CommentService underTest;
@@ -64,7 +57,7 @@ class CommentServiceTest {
     }
 
     @Test
-    void shouldSaveCommentAndCreateTicketWhenQualified() {
+    void shouldSaveCommentAndPublishEvent() {
         // given
         CreateCommentRequest commentRequest = new CreateCommentRequest("atbc@gmail.com", "Payment system is broken");
         Comment commentAboutBilling = new Comment();
@@ -72,17 +65,8 @@ class CommentServiceTest {
         commentAboutBilling.setSenderEmail(commentRequest.senderEmail());
         commentAboutBilling.setContent(commentRequest.content());
 
-        AiTicketResponse aiResponse = new AiTicketResponse(
-                true,
-                "Payment Failure",
-                Category.BILLING,
-                Priority.HIGH,
-                "Customer can't complete payment"
-        );
-
         given(userRepository.findApplicationUserByUsername("user123")).willReturn(Optional.of(mockUser));
         given(commentRepository.save(any(Comment.class))).willReturn(commentAboutBilling);
-        given(huggingFaceService.analyzeMessage(commentAboutBilling.getContent())).willReturn(aiResponse);
 
         // when
         CommentResponse actual = underTest.save(commentRequest, "user123");
@@ -92,39 +76,7 @@ class CommentServiceTest {
         assertThat(actual.senderEmail()).isEqualTo(commentRequest.senderEmail());
         assertThat(actual.content()).isEqualTo(commentRequest.content());
         verify(commentRepository).save(any(Comment.class));
-        verify(huggingFaceService).analyzeMessage(commentAboutBilling.getContent());
-        verify(ticketRepository).save(any(Ticket.class));
-    }
-
-    @Test
-    void shouldSaveCommentWithoutCreatingTicketWhenNotQualified() {
-        // given
-        CreateCommentRequest commentRequest = new CreateCommentRequest("atbc@gmail.com", "Hello, how are you?");
-        Comment commentAboutBilling = new Comment();
-        commentAboutBilling.setUser(mockUser);
-        commentAboutBilling.setSenderEmail(commentRequest.senderEmail());
-        commentAboutBilling.setContent(commentRequest.content());
-
-        AiTicketResponse aiResponse = new AiTicketResponse(
-                false,
-                null,
-                null,
-                null,
-                null
-        );
-
-        given(userRepository.findApplicationUserByUsername("user123")).willReturn(Optional.of(mockUser));
-        given(commentRepository.save(any(Comment.class))).willReturn(commentAboutBilling);
-        given(huggingFaceService.analyzeMessage(commentAboutBilling.getContent())).willReturn(aiResponse);
-
-        // when
-        CommentResponse actual = underTest.save(commentRequest, "user123");
-
-        // then
-        assertThat(actual).isNotNull();
-        verify(commentRepository).save(any(Comment.class));
-        verify(huggingFaceService).analyzeMessage(commentAboutBilling.getContent());
-        verify(ticketRepository, never()).save(any(Ticket.class));
+        verify(eventPublisher).publishEvent(any(CommentCreatedEvent.class));
     }
 
     @Test
