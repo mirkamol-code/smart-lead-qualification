@@ -1,19 +1,25 @@
 package com.mirkamolcode.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.LockedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handle(
@@ -48,17 +54,43 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(LockedException.class)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> handle(
-            LockedException exception,
+            HttpMessageNotReadableException exception,
             HttpServletRequest request
     ) {
         ApiError apiError = ApiError.of(
-                "User account is locked. Please contact an administrator to unlock it.",
-                HttpStatus.LOCKED.value(),
+                "Malformed JSON request body",
+                HttpStatus.BAD_REQUEST.value(),
                 request.getRequestURI()
         );
-        return new ResponseEntity<>(apiError, HttpStatus.LOCKED);
+        return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handle(
+            MethodArgumentTypeMismatchException exception,
+            HttpServletRequest request
+    ) {
+        ApiError apiError = ApiError.of(
+                "Invalid parameter value for '" + exception.getName() + "'",
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> handle(
+            HttpRequestMethodNotSupportedException exception,
+            HttpServletRequest request
+    ) {
+        ApiError apiError = ApiError.of(
+                "HTTP method '" + exception.getMethod() + "' is not supported for this endpoint",
+                HttpStatus.METHOD_NOT_ALLOWED.value(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(apiError, HttpStatus.METHOD_NOT_ALLOWED);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -79,8 +111,10 @@ public class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request
     ) {
+        log.error("Unhandled exception for request [{}]: ", request.getRequestURI(), exception);
+
         ApiError apiError = ApiError.of(
-                exception.getMessage() != null ? exception.getMessage() : "An unexpected error occurred",
+                "An unexpected internal server error occurred. Please try again later.",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 request.getRequestURI()
         );
