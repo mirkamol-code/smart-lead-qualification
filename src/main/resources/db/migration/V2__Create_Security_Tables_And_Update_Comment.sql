@@ -39,10 +39,9 @@ CREATE TABLE IF NOT EXISTS app_user_role (
         FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE
 );
 
-ALTER TABLE comment
-    ADD COLUMN user_id UUID,
-    ADD CONSTRAINT fk_comment_user
-        FOREIGN KEY (user_id) REFERENCES app_users (id) ON DELETE CASCADE;
+DELETE FROM comment;
 
 ALTER TABLE comment
-    ALTER COLUMN user_id SET NOT NULL;
+    ADD COLUMN user_id UUID NOT NULL,
+    ADD CONSTRAINT fk_comment_user
+        FOREIGN KEY (user_id) REFERENCES app_users (id) ON DELETE CASCADE;
