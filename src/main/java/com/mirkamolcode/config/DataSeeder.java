@@ -27,6 +27,15 @@ public class DataSeeder implements CommandLineRunner {
     private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @org.springframework.beans.factory.annotation.Value("${app.admin.username:admin123}")
+    private String adminUsername;
+
+    @org.springframework.beans.factory.annotation.Value("${app.admin.password:password}")
+    private String adminPassword;
+
+    @org.springframework.beans.factory.annotation.Value("${spring.profiles.active:local}")
+    private String activeProfile;
+
     public DataSeeder(ApplicationUserRepository userRepository, RoleRepository roleRepository, PermissionRepository permissionRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -47,8 +56,11 @@ public class DataSeeder implements CommandLineRunner {
         Role userRole = getOrCreateRole("USER", Set.of(ownCommentRead, commentCreate));
         Role adminRole = getOrCreateRole("ADMIN", Set.of(ownCommentRead, commentCreate, anyCommentRead, commentListRead, ticketListRead, ticketsRead));
 
-        createUserIfNotFound("user123", "password", Set.of(userRole));
-        createUserIfNotFound("admin123", "password", Set.of(adminRole));
+        createUserIfNotFound(adminUsername, adminPassword, Set.of(adminRole));
+
+        if (!"prod".equalsIgnoreCase(activeProfile)) {
+            createUserIfNotFound("user123", "password", Set.of(userRole));
+        }
     }
 
     private Permission getOrCreatePermission(String name) {

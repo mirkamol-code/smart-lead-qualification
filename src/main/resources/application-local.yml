@@ -12,7 +12,3 @@ spring:
   web:
     error:
       include-message: always
-
-app:
-  data-seeder:
-    enabled: true

@@ -20,4 +20,7 @@ spring:
 
 app:
   data-seeder:
-    enabled: false
+    enabled: true
+  admin:
+    username: ${APP_ADMIN_USERNAME:admin123}
+    password: ${APP_ADMIN_PASSWORD:password}
