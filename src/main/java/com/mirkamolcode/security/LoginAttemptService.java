@@ -9,12 +9,15 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 public class LoginAttemptService {
 
     private final ApplicationUserRepository applicationUserRepository;
     private static final Logger log = LoggerFactory.getLogger(LoginAttemptService.class);
     private static final int MAX_FAILED_ATTEMPTS = 10;
+    private static final int LOCK_DURATION_MINUTES = 15;
 
     public LoginAttemptService(ApplicationUserRepository applicationUserRepository) {
         this.applicationUserRepository = applicationUserRepository;
@@ -26,10 +29,18 @@ public class LoginAttemptService {
         String username = e.getAuthentication().getName();
         applicationUserRepository.findApplicationUserByUsername(username)
                 .ifPresent(user -> {
+                    boolean updated = false;
                     if (user.getNumberOfFailedLoginAttempts() != null && user.getNumberOfFailedLoginAttempts() > 0) {
                         user.setNumberOfFailedLoginAttempts(0);
-                        applicationUserRepository.save(user);
+                        updated = true;
                         log.info("Reset failed login attempts for user '{}'", username);
+                    }
+                    if (user.getLockedUntil() != null) {
+                        user.setLockedUntil(null);
+                        updated = true;
+                    }
+                    if (updated) {
+                        applicationUserRepository.save(user);
                     }
                 });
     }
@@ -48,9 +59,9 @@ public class LoginAttemptService {
                         user.setNumberOfFailedLoginAttempts(newAttempts);
 
                         if (newAttempts >= MAX_FAILED_ATTEMPTS) {
-                            user.setAccountLocked(true);
-                            log.warn("User '{}' has been blocked after {} failed login attempts.", username, newAttempts);
-
+                            user.setLockedUntil(LocalDateTime.now().plusMinutes(LOCK_DURATION_MINUTES));
+                            log.warn("User '{}' has been temporarily locked for {} minutes after {} failed login attempts.",
+                                    username, LOCK_DURATION_MINUTES, newAttempts);
                         } else {
                             log.warn("Failed login attempt {}/{} for user '{}'", newAttempts, MAX_FAILED_ATTEMPTS, username);
                         }

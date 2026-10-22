@@ -1,6 +1,7 @@
 package com.mirkamolcode.entity;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -35,6 +36,9 @@ public class ApplicationUser {
 
     @Column(nullable = false)
     private boolean isAccountLocked = false;
+
+    @Column
+    private LocalDateTime lockedUntil;
 
     @Column(nullable = false)
     private boolean isAccountExpired = false;
@@ -110,11 +114,22 @@ public class ApplicationUser {
     }
 
     public boolean isAccountLocked() {
-        return isAccountLocked;
+        if (isAccountLocked) {
+            return true;
+        }
+        return lockedUntil != null && lockedUntil.isAfter(LocalDateTime.now());
     }
 
     public void setAccountLocked(boolean accountLocked) {
         isAccountLocked = accountLocked;
+    }
+
+    public LocalDateTime getLockedUntil() {
+        return lockedUntil;
+    }
+
+    public void setLockedUntil(LocalDateTime lockedUntil) {
+        this.lockedUntil = lockedUntil;
     }
 
     public boolean isAccountExpired() {

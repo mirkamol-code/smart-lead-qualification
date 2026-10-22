@@ -22,6 +22,7 @@ public class AppUserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         user.setAccountLocked(false);
+        user.setLockedUntil(null);
         user.setNumberOfFailedLoginAttempts(0);
         applicationUserRepository.save(user);
     }
@@ -32,6 +33,7 @@ public class AppUserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
 
         user.setAccountLocked(false);
+        user.setLockedUntil(null);
         user.setNumberOfFailedLoginAttempts(0);
         applicationUserRepository.save(user);
     }
