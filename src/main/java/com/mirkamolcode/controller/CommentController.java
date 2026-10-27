@@ -25,6 +25,7 @@ public class CommentController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('comment:create')")
     public ApiResponse<CommentResponse> create(
             @Valid @RequestBody CreateCommentRequest request,

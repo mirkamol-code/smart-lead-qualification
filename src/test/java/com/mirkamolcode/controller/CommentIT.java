@@ -9,6 +9,7 @@ import com.mirkamolcode.service.HuggingFaceService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -156,6 +157,18 @@ public class CommentIT extends AbstractTestConfig {
                 .isNotFound();
     }
 
+    @Test
+    void shouldReturn415WhenCreatingCommentWithFormUrlEncodedBody() {
+        webTestClient.post()
+                .uri(PRODUCT_BASE_URL)
+                .headers(h -> h.setBasicAuth("user123", "password"))
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("senderEmail=test%40gmail.com&content=I+am+having+issue+with+payment")
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    }
+
     private CommentResponse createComment(CreateCommentRequest request) {
         ApiResponse<CommentResponse> response = webTestClient.post()
                 .uri(PRODUCT_BASE_URL)
@@ -163,7 +176,7 @@ public class CommentIT extends AbstractTestConfig {
                 .bodyValue(request)
                 .exchange()
                 .expectStatus()
-                .isOk()
+                .isCreated()
                 .expectBody(new ParameterizedTypeReference<ApiResponse<CommentResponse>>() {
                 })
                 .returnResult()

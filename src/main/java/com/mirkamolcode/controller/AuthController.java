@@ -19,6 +19,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         UserResponse response = appUserService.register(request);
         return ApiResponse.success("User registered successfully", 201, response);
