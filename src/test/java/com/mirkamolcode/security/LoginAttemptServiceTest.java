@@ -54,9 +54,9 @@ class LoginAttemptServiceTest {
     }
 
     @Test
-    void shouldSetLockedUntilWhenMaxAttemptsReached() {
+    void shouldSetLockedUntilAndResetCounterWhenMaxAttemptsReached() {
         // given
-        user.setNumberOfFailedLoginAttempts(9);
+        user.setNumberOfFailedLoginAttempts(4);
         given(userRepository.findApplicationUserByUsername("user123")).willReturn(Optional.of(user));
         var auth = new UsernamePasswordAuthenticationToken("user123", "wrong");
         var event = new AuthenticationFailureBadCredentialsEvent(auth, new BadCredentialsException("bad"));
@@ -65,10 +65,28 @@ class LoginAttemptServiceTest {
         underTest.onFailure(event);
 
         // then
-        assertThat(user.getNumberOfFailedLoginAttempts()).isEqualTo(10);
+        assertThat(user.getNumberOfFailedLoginAttempts()).isEqualTo(0);
         assertThat(user.getLockedUntil()).isNotNull();
         assertThat(user.getLockedUntil()).isAfter(LocalDateTime.now());
         assertThat(user.isAccountLocked()).isTrue();
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void shouldNotRelockOnSingleFailureAfterLockExpires() {
+        // given - user was locked (counter reset) and the lock has now expired
+        user.setNumberOfFailedLoginAttempts(0);
+        user.setLockedUntil(LocalDateTime.now().minusMinutes(1));
+        given(userRepository.findApplicationUserByUsername("user123")).willReturn(Optional.of(user));
+        var auth = new UsernamePasswordAuthenticationToken("user123", "wrong");
+        var event = new AuthenticationFailureBadCredentialsEvent(auth, new BadCredentialsException("bad"));
+
+        // when
+        underTest.onFailure(event);
+
+        // then
+        assertThat(user.getNumberOfFailedLoginAttempts()).isEqualTo(1);
+        assertThat(user.isAccountLocked()).isFalse();
         verify(userRepository).save(user);
     }
 

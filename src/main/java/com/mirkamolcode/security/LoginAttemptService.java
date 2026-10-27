@@ -16,7 +16,7 @@ public class LoginAttemptService {
 
     private final ApplicationUserRepository applicationUserRepository;
     private static final Logger log = LoggerFactory.getLogger(LoginAttemptService.class);
-    private static final int MAX_FAILED_ATTEMPTS = 10;
+    private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final int LOCK_DURATION_MINUTES = 15;
 
     public LoginAttemptService(ApplicationUserRepository applicationUserRepository) {
@@ -56,13 +56,15 @@ public class LoginAttemptService {
                         int currentAttempts = user.getNumberOfFailedLoginAttempts() != null
                                 ? user.getNumberOfFailedLoginAttempts() : 0;
                         int newAttempts = currentAttempts + 1;
-                        user.setNumberOfFailedLoginAttempts(newAttempts);
 
                         if (newAttempts >= MAX_FAILED_ATTEMPTS) {
                             user.setLockedUntil(LocalDateTime.now().plusMinutes(LOCK_DURATION_MINUTES));
+                            // Reset the counter so the user gets a fresh set of attempts once the lock expires
+                            user.setNumberOfFailedLoginAttempts(0);
                             log.warn("User '{}' has been temporarily locked for {} minutes after {} failed login attempts.",
                                     username, LOCK_DURATION_MINUTES, newAttempts);
                         } else {
+                            user.setNumberOfFailedLoginAttempts(newAttempts);
                             log.warn("Failed login attempt {}/{} for user '{}'", newAttempts, MAX_FAILED_ATTEMPTS, username);
                         }
                         applicationUserRepository.save(user);
