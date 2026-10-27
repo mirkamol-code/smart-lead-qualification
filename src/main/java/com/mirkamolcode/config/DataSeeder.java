@@ -8,6 +8,7 @@ import com.mirkamolcode.repository.PermissionRepository;
 import com.mirkamolcode.repository.RoleRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -33,14 +34,14 @@ public class DataSeeder implements CommandLineRunner {
     @org.springframework.beans.factory.annotation.Value("${app.admin.password:password}")
     private String adminPassword;
 
-    @org.springframework.beans.factory.annotation.Value("${spring.profiles.active:local}")
-    private String activeProfile;
+    private final Environment environment;
 
-    public DataSeeder(ApplicationUserRepository userRepository, RoleRepository roleRepository, PermissionRepository permissionRepository, PasswordEncoder passwordEncoder) {
+    public DataSeeder(ApplicationUserRepository userRepository, RoleRepository roleRepository, PermissionRepository permissionRepository, PasswordEncoder passwordEncoder, Environment environment) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
         this.passwordEncoder = passwordEncoder;
+        this.environment = environment;
     }
 
     @Override
@@ -58,7 +59,7 @@ public class DataSeeder implements CommandLineRunner {
 
         createUserIfNotFound(adminUsername, adminPassword, Set.of(adminRole));
 
-        if (!"prod".equalsIgnoreCase(activeProfile)) {
+        if (!environment.matchesProfiles("prod")) {
             createUserIfNotFound("user123", "password", Set.of(userRole));
         }
     }

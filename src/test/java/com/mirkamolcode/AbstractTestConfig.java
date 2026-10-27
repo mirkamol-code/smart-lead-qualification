@@ -8,7 +8,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                "spring.profiles.active=local",
+                "app.admin.username=admin123",
+                "app.admin.password=password"
+        })
 @ActiveProfiles("local")
 @AutoConfigureWebTestClient
 @Testcontainers

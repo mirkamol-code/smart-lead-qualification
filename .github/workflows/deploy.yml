@@ -58,6 +58,9 @@ jobs:
           ssh-private-key: ${{ env.EC2_SSH_PRIVATE_KEY }}
 
       - name: SSH To EC2 and Deploy
+        env:
+          APP_ADMIN_USERNAME: ${{ secrets.APP_ADMIN_USERNAME }}
+          APP_ADMIN_PASSWORD: ${{ secrets.APP_ADMIN_PASSWORD }}
         run: |
           curl -X POST -H "Content-type: application/json" \
           --data '{"text":"🚀 Starting deployment to EC2..."}' \
