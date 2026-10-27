@@ -13,7 +13,11 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private ApplicationUser user;
+
+    @Column(nullable = false, length = 254)
     private String senderEmail;
 
     @Column(length = 2000)
@@ -36,6 +40,7 @@ public class Comment {
         this.senderEmail = senderEmail;
         this.content = content;
     }
+
 
     public UUID getId() {
         return id;
@@ -69,15 +74,23 @@ public class Comment {
         this.createdAt = createdAt;
     }
 
+    public ApplicationUser getUser() {
+        return user;
+    }
+
+    public void setUser(ApplicationUser user) {
+        this.user = user;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Comment comment = (Comment) o;
-        return Objects.equals(id, comment.id) && Objects.equals(senderEmail, comment.senderEmail) && Objects.equals(content, comment.content) && Objects.equals(createdAt, comment.createdAt);
+        return Objects.equals(id, comment.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, senderEmail, content, createdAt);
+        return Objects.hashCode(id);
     }
 }

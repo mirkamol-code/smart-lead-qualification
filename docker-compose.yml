@@ -9,6 +9,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/comments_db
       SPRING_DATASOURCE_USERNAME: mirkamol
       SPRING_DATASOURCE_PASSWORD: password
+      HUGGINGFACE_API_TOKEN: ${HUGGINGFACE_API_TOKEN:-}
+      APP_ADMIN_USERNAME: ${APP_ADMIN_USERNAME:-}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:-}
     ports:
       - "8090:8080"
     networks:

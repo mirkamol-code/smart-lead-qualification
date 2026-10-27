@@ -2,27 +2,25 @@ server:
   port: 8080
   servlet:
     context-path: /api/v1
+
 spring:
+  application:
+    name: comment-to-ticket-triage
+  profiles:
+    active: local
   ai:
     openai:
       api-key: ${HUGGINGFACE_API_TOKEN}
       chat:
         model: meta-llama/Llama-3.3-70B-Instruct:groq
       base-url: https://router.huggingface.co/v1
-  application:
-    name: comment-to-ticket-triage
-  datasource:
-    username: mirkamol
-    password: password
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5333/comments_db
   jpa:
     hibernate:
       ddl-auto: validate
-    properties:
-      hibernate:
-        format_sql: true
-        show_sql: true
-  web:
-    error:
-      include-message: always
+
+app:
+  data-seeder:
+    enabled: true
+  admin:
+    username: ${APP_ADMIN_USERNAME:admin123}
+    password: ${APP_ADMIN_PASSWORD:password}

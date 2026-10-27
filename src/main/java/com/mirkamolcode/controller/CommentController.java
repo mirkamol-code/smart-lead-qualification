@@ -1,12 +1,19 @@
 package com.mirkamolcode.controller;
 
+import com.mirkamolcode.dto.ApiResponse;
 import com.mirkamolcode.dto.CommentResponse;
 import com.mirkamolcode.dto.CreateCommentRequest;
 import com.mirkamolcode.service.CommentService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/messages")
@@ -18,12 +25,45 @@ public class CommentController {
     }
 
     @PostMapping
-    public CommentResponse create(@Valid @RequestBody CreateCommentRequest request){
-        return commentService.save(request);
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('comment:create')")
+    public ApiResponse<CommentResponse> create(
+            @Valid @RequestBody CreateCommentRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        CommentResponse response = commentService.save(request, userDetails.getUsername());
+        return ApiResponse.success("Comment created successfully", 201, response);
+    }
+
+    @GetMapping("/my")
+    @PreAuthorize("hasAuthority('own comment:read')")
+    public ApiResponse<Page<CommentResponse>> getMyComments(
+            @AuthenticationPrincipal UserDetails userDetails,
+            Pageable pageable) {
+        Page<CommentResponse> comments = commentService.getMyComments(userDetails.getUsername(), pageable);
+        return ApiResponse.success("User comments retrieved successfully", comments);
     }
 
     @GetMapping
-    public List<CommentResponse> getAll(){
-        return commentService.getAll();
+    @PreAuthorize("hasAuthority('commentList:read')")
+    public ApiResponse<Page<CommentResponse>> getAll(Pageable pageable) {
+        Page<CommentResponse> comments = commentService.getAll(pageable);
+        return ApiResponse.success("All comments retrieved successfully", comments);
+    }
+
+    @GetMapping("all/{id}")
+    @PreAuthorize("hasAuthority('any comment:read')")
+    public ApiResponse<CommentResponse> getAnyCommentById(
+            @PathVariable UUID id) {
+        CommentResponse comment = commentService.getAnyCommentById(id);
+        return ApiResponse.success("Comment retrieved successfully", comment);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('own comment:read')")
+    public ApiResponse<CommentResponse> getOwnCommentById(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        CommentResponse comment = commentService.getOwnCommentById(id, userDetails);
+        return ApiResponse.success("Comment retrieved successfully", comment);
     }
 }
