@@ -7,7 +7,7 @@ spring:
   application:
     name: comment-to-ticket-triage
   profiles:
-    active: local
+    active: prod
   ai:
     openai:
       api-key: ${HUGGINGFACE_API_TOKEN}

@@ -12,8 +12,6 @@ jobs:
       DOCKER_COMPOSE_APP_SERVICE_NAME: comment-service
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       HUGGINGFACE_API_TOKEN: ${{ secrets.AI_TOKEN }}
-      APP_ADMIN_USERNAME: ${{ secrets.APP_ADMIN_USERNAME }}
-      APP_ADMIN_PASSWORD: ${{ secrets.APP_ADMIN_PASSWORD }}
       EC2_SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
       EC2_PUBLIC_IP_ADDRESS: ${{ secrets.EC2_PUBLIC_IP_ADDRESS }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -58,6 +56,9 @@ jobs:
           ssh-private-key: ${{ env.EC2_SSH_PRIVATE_KEY }}
 
       - name: SSH To EC2 and Deploy
+        env:
+          APP_ADMIN_USERNAME: ${{ secrets.APP_ADMIN_USERNAME }}
+          APP_ADMIN_PASSWORD: ${{ secrets.APP_ADMIN_PASSWORD }}
         run: |
           curl -X POST -H "Content-type: application/json" \
           --data '{"text":"🚀 Starting deployment to EC2..."}' \
